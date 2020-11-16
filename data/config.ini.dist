@@ -1,0 +1,4 @@
+# configuration for github related actions like "project:create"
+[github]
+# your personal token, can be be created here: https://github.com/settings/tokens
+token = xxxxxxxxxxxxxxxxxxxxxxxxx

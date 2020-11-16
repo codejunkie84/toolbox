@@ -3,11 +3,12 @@ class HelpHandler:
     def show(argc: int, argv: list) -> int:
         print('toolbox')
         print('-------------------------------------------------------')
-        print("")
+        print("Simple tool in which my common work steps are automated and collected")
         print()
-        print('Dummy Commands:')
-        print('  bin/toolbox dummy:action <dummy file>')
-        print('    Dummy command description')
+        print('Project Commands:')
+        print('  bin/toolbox project:create <language> <project name> [<project description>]')
+        print('    Creates a new private GitHub repository for <project name> with a <language> template')
+        print('    Supported languages: python')
         print()
 
         return 0
