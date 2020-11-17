@@ -14,7 +14,6 @@ cp data/config.ini.dist data/config.ini
 vim data/config.ini
 
 # setup venv
-chmod +x bin/toolbox
 python3 -m venv venv
 source venv/bin/activate
 pip3 install -r requirements.txt
