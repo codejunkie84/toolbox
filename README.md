@@ -1,8 +1,28 @@
 # toolbox
-Simple tool in which my common work steps are automated and collected
+Simple tool in which my common work steps are automated and collected.
 
 ## Installation
-For a simple "installation" just clone or download this repository, create a copy of `data/config.ini.dist` to `data/config.ini` and fill it out, after that just start using this tool by executing `bin/toolbox` with Python at the command line.
+There is actually no setup script, so the installation have to be done manually. Just enter the following in your local Shell - after this you can just write `toolbox` to use the application.
+
+```bash
+# clone
+git clone git@github.com:codejunkie84/toolbox.git
+cd toolbox
+
+# create config
+cp data/config.ini.dist data/config.ini
+vim data/config.ini
+
+# setup venv
+chmod +x bin/toolbox
+python3 -m venv venv
+source venv/bin/activate
+pip3 install -r requirements.txt
+
+# setup environment
+echo "# add this to your environment"
+echo "export PATH=\$PATH:'$(pwd)/bin/'"
+```
 
 ## Description
 **toolbox** is a simple command-line program which contains my common work steps in an automated form. It requires the Python interpreter, version 3.7+, and it is not platform specific. The application works on your macOS, Linux and Windows.
