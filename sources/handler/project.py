@@ -50,8 +50,9 @@ class ProjectHandler:
         content = """
 # project stuff
 ##############################################################################
-.idea/
-data/config.ini
+/.idea/
+/data/cache/
+/data/config.ini
 
 # OS generated files
 ##############################################################################
@@ -69,15 +70,138 @@ Thumbs.db
 __pycache__/
 *.py[cod]
 *$py.class
-venv/
+/venv/
 
 # php
 ##############################################################################
-composer.phar
-composer.lock
-vendor/
+/composer.phar
+/composer.lock
+/vendor/
 """
         Path(repo_name + '/.gitignore').write_text(content.lstrip())
+
+        # PHP dummy project
+        # --------------------------------------------------------------------------------------------------------------
+        if argv[2] == 'php':
+            # starter cli
+            content = """
+#! /usr/bin/env php
+<?php
+declare(strict_types=1);
+
+use Application\\Kernel;
+
+require_once __DIR__ . '/../vendor/autoload.php';
+
+echo (new Kernel())->run($_SERVER['argv'][1] ?? '');
+"""
+            Path(repo_name + '/bin/cli').write_text(content.lstrip())
+
+            # starter www
+            Path(repo_name + '/public/').mkdir(parents=True)
+            content = """
+<?php
+declare(strict_types=1);
+
+use Application\\Kernel;
+
+require_once __DIR__ . '/../vendor/autoload.php';
+
+echo (new Kernel())->run(explode('?', $_SERVER['REQUEST_URI'])[0]);
+"""
+            Path(repo_name + '/public/index.php').write_text(content.lstrip())
+
+            content = """
+RewriteEngine On
+
+# Reroute any incoming request that is not an existing file
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteRule ^(.*)$ index.php [QSA,L]
+
+"""
+            Path(repo_name + '/public/.htaccess').write_text(content.lstrip())
+
+            # kernel
+            content = """
+<?php
+declare(strict_types=1);
+
+namespace Application;
+
+use ErrorException;
+
+class Kernel
+{
+    public function __construct()
+    {
+        // initialize environment
+        // ------------------------------------------------------------------------------------------------------------
+        date_default_timezone_set('UTC');
+        error_reporting(- 1);
+        ini_set('display.errors', '1');
+        define('LF', "\\n");
+        define('IS_DEBUG', isset($_COOKIE['debug'])));
+        chdir(__DIR__ . '/../');
+
+        // set up error handling
+        // ------------------------------------------------------------------------------------------------------------
+        set_error_handler(function ($code, $message, $file, $line) {
+            $codeCaptions = [
+                E_WARNING => 'Warning',
+                E_NOTICE => 'Notice',
+                E_USER_ERROR => 'User Error',
+                E_USER_WARNING => 'User Warning',
+                E_USER_NOTICE => 'User Notice',
+                E_STRICT => 'Runtime Notice',
+                E_RECOVERABLE_ERROR => 'Catchable Fatal Error'
+            ];
+
+            throw new ErrorException(sprintf('%s: %s in %s line %d', $codeCaptions[$code], $message, $file, $line));
+        });
+
+        set_exception_handler(function ($e) {
+            if (IS_DEBUG) {
+                header('Content-Type: text/plain; charset=utf-8');
+                die($e);
+            }
+
+            echo "500";
+            die;
+        });
+
+        // set up
+        // ------------------------------------------------------------------------------------------------------------
+        // TODO: fill out
+    }
+
+    public function run(string $url): string
+    {
+        // TODO: fill out
+        return __METHOD__;
+    }
+}
+"""
+            Path(repo_name + '/sources/Kernel.php').write_text(content.lstrip())
+
+            # composer.json
+            content = """
+{
+    "require" : {
+        "php" : ">=7.4.0",
+        "ext-intl": "*",
+        "ext-curl": "*",
+        "ext-pdo": "*",
+        "ext-json": "*"
+    },
+    "autoload" : {
+        "psr-4" : {
+            "Application\\\\" : "sources/",
+            "Test\\\\Application\\\\" : "tests/"
+        }
+    }
+}
+"""
+            Path(repo_name + '/composer.json').write_text(content.lstrip())
 
         # Python dummy project
         # --------------------------------------------------------------------------------------------------------------
@@ -133,7 +257,7 @@ class HelpHandler:
             Path(repo_name + '/sources/handler/help.py').write_text(content.lstrip())
 
             # create venv
-            check_call(['python3', '-m', 'venv', 'venv'], stdout=DEVNULL, stderr=STDOUT)
+            # check_call(['python3', '-m', 'venv', 'venv'], stdout=DEVNULL, stderr=STDOUT)
 
         # init git
         # --------------------------------------------------------------------------------------------------------------
@@ -143,7 +267,8 @@ class HelpHandler:
         check_call(['git', 'add', '.'], stdout=DEVNULL, stderr=STDOUT)
         check_call(['git', 'commit', '-m', 'initial commit'], stdout=DEVNULL, stderr=STDOUT)
         check_call(['git', 'branch', '-M', 'main'], stdout=DEVNULL, stderr=STDOUT)
-        check_call(['git', 'remote', 'add', 'origin', 'git@github.com:' + repo.full_name + '.git'], stdout=DEVNULL, stderr=STDOUT)
+        check_call(['git', 'remote', 'add', 'origin', 'git@github.com:' + repo.full_name + '.git'], stdout=DEVNULL,
+                   stderr=STDOUT)
         os.chdir(cwd)
 
         return 0
