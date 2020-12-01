@@ -113,9 +113,9 @@ RewriteRule (.*) 0000-00-00--0/public/$1 [L]
         dns = ['DNS:' + x for x in dns_list]
         dns = ",".join(dns)
 
-        subprocess.Popen('openssl genrsa 4096 > ' + directory + '/tls/account.key', shell=True, executable='/bin/bash').read()
+        os.popen('openssl genrsa 4096 > ' + directory + '/tls/account.key').read()
         os.popen('openssl genrsa 4096 > ' + directory + '/tls/domain.key').read()
-        os.popen('openssl req -new -sha256 -key ' + directory + '/tls/domain.key -subj "/" -reqexts SAN -config <(cat /etc/pki/tls/openssl.cnf  <(printf "[SAN]\\nsubjectAltName=' + dns + '")) > ' + directory + '/tls/domain.csr').read()
+        subprocess.Popen('openssl req -new -sha256 -key ' + directory + '/tls/domain.key -subj "/" -reqexts SAN -config <(cat /etc/pki/tls/openssl.cnf  <(printf "[SAN]\\nsubjectAltName=' + dns + '")) > ' + directory + '/tls/domain.csr', shell=True, executable='/bin/bash')
         os.popen('python3 /root/bin/acme_tiny.py --account-key ' + directory + '/tls/account.key --csr ' + directory + '/tls/domain.csr --acme-dir ' + directory + '/tls/well-known/ > ' + directory + '/tls/signed.crt').read()
         os.popen('wget --quiet -O - https://letsencrypt.org/certs/lets-encrypt-x3-cross-signed.pem > ' + directory + '/tls/intermediate.pem').read()
         os.popen('cat ' + directory + '/tls/signed.crt ' + directory + '/tls/intermediate.pem > ' + directory + '/tls/chained.pem')
