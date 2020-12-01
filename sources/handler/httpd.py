@@ -186,6 +186,13 @@ RewriteRule (.*) 0000-00-00--0/public/$1 [L]
         shutil.copy(Path(directory_tls + '/signed.crt'), Path(directory_tls_backup + '/signed.crt'))
 
         os.popen('python3 /root/bin/acme_tiny.py --account-key ' + directory + '/tls/account.key --csr ' + directory + '/tls/domain.csr --acme-dir ' + directory + '/tls/well-known/ > ' + directory + '/tls/signed.crt').read()
+
+        # if acme_tiny failed, restore signed.crt and abort
+        if Path(directory + '/tls/signed.crt').stat().st_size == 0:
+            shutil.copy(Path(directory_tls_backup + '/signed.crt'), Path(directory_tls + '/signed.crt'))
+            print('ERROR: acme_tiny.py failed, no certificate updated')
+            return -1
+
         os.popen('wget --quiet -O - https://letsencrypt.org/certs/lets-encrypt-x3-cross-signed.pem > ' + directory + '/tls/intermediate.pem').read()
         os.popen('cat ' + directory + '/tls/signed.crt ' + directory + '/tls/intermediate.pem > ' + directory + '/tls/chained.pem')
 
