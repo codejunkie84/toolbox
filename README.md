@@ -36,6 +36,16 @@ bin/toolbox project:create <language> <project name> [<project description>]
   Supported languages: python
 ```
 
+### Httpd Commands
+Commands for managing the Httpd service on centos (Apache 2)
+```
+bin/toolbox httpd:create <domain> [<domain aliases ...>]
+  Creates a new virtual host configuration and hosting directory with TLS certificate
+
+bin/toolbox httpd:refresh-tls <domain>
+  Refreshes the TLS certificate
+```
+
 ## Contribute
 As an open source project all contributions are welcome. Feel free to support this project with pull requests and your own improvements.
 

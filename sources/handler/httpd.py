@@ -2,6 +2,7 @@ from pathlib import Path
 import os
 from datetime import date
 import shutil
+import subprocess
 
 
 class HttpdHandler:
@@ -37,6 +38,7 @@ class HttpdHandler:
         directory = '/var/www/{tld}.{domain}.{sub_domain}'.format(tld=tld, domain=domain, sub_domain=sub_domain)
 
         # setup web folder
+        Path(directory + '/htdocs').mkdir(parents=True, exist_ok=True)
         Path(directory + '/logs').mkdir(parents=True, exist_ok=True)
         Path(directory + '/tls/well-known').mkdir(parents=True, exist_ok=True)
 
@@ -50,7 +52,6 @@ class HttpdHandler:
             link.unlink()
         link.symlink_to('0000-00-00--0', target_is_directory=True)
 
-        Path(directory + '/htdocs').mkdir(parents=True, exist_ok=True)
         Path(directory + '/htdocs/0000-00-00--0/public').mkdir(parents=True, exist_ok=True)
         Path(directory + '/htdocs/0000-00-00--0/public/index.php').write_text('...')
         Path(directory + '/htdocs/0000-00-00--0/public/.htaccess').write_text("""
@@ -108,14 +109,14 @@ RewriteRule (.*) 0000-00-00--0/public/$1 [L]
         os.popen('service httpd restart').read()
 
         dns_list = domains
-        dns_list.append(domain)
+        dns_list.append(domain + '.' + tld)
         dns = ['DNS:' + x for x in dns_list]
         dns = ",".join(dns)
 
-        os.popen('openssl genrsa 4096 > ' + directory + '/tls/account.key').read()
+        subprocess.Popen('openssl genrsa 4096 > ' + directory + '/tls/account.key', shell=True, executable='/bin/bash').read()
         os.popen('openssl genrsa 4096 > ' + directory + '/tls/domain.key').read()
-        os.popen('openssl req -new -sha256 -key ' + directory + '/tls/domain.key -subj "/" -reqexts SAN -config <(cat /etc/pki/tls/openssl.cnf  <(printf "[SAN]\nsubjectAltName=DNS:' + dns + '")) > ' + directory + '/tls/domain.csr').read()
-        os.popen('python3 /root/bin/acme_tiny.py --account-key ' + directory + '/tls/account.key --csr ' + directory + '/tls/domain.csr --acme-dir /var/www/' + directory + '/tls/well-known/ > ' + directory + '/tls/signed.crt').read()
+        os.popen('openssl req -new -sha256 -key ' + directory + '/tls/domain.key -subj "/" -reqexts SAN -config <(cat /etc/pki/tls/openssl.cnf  <(printf "[SAN]\\nsubjectAltName=' + dns + '")) > ' + directory + '/tls/domain.csr').read()
+        os.popen('python3 /root/bin/acme_tiny.py --account-key ' + directory + '/tls/account.key --csr ' + directory + '/tls/domain.csr --acme-dir ' + directory + '/tls/well-known/ > ' + directory + '/tls/signed.crt').read()
         os.popen('wget --quiet -O - https://letsencrypt.org/certs/lets-encrypt-x3-cross-signed.pem > ' + directory + '/tls/intermediate.pem').read()
         os.popen('cat ' + directory + '/tls/signed.crt ' + directory + '/tls/intermediate.pem > ' + directory + '/tls/chained.pem')
 
@@ -145,9 +146,8 @@ RewriteRule (.*) 0000-00-00--0/public/$1 [L]
 
 """.format(server_name=server_name, server_aliases=server_aliases, tld=tld, domain=domain, sub=sub_domain)
         conf = Path('/etc/httpd/conf.d/{tld}.{domain}.{sub}.conf'.format(tld=tld, domain=domain, sub=sub_domain))
-        conf.open('a')
-        conf.write_text(vhost.lstrip())
-        conf.close()
+        with conf.open('a') as f:
+            f.write(vhost.lstrip())
 
         os.popen('service httpd reload').read()
 
@@ -185,7 +185,7 @@ RewriteRule (.*) 0000-00-00--0/public/$1 [L]
         shutil.copy(Path(directory_tls + '/intermediate.pem'), Path(directory_tls_backup + '/intermediate.pem'))
         shutil.copy(Path(directory_tls + '/signed.crt'), Path(directory_tls_backup + '/signed.crt'))
 
-        os.popen('python3 /root/bin/acme_tiny.py --account-key ' + directory + '/tls/account.key --csr ' + directory + '/tls/domain.csr --acme-dir /var/www/' + directory + '/tls/well-known/ > ' + directory + '/tls/signed.crt').read()
+        os.popen('python3 /root/bin/acme_tiny.py --account-key ' + directory + '/tls/account.key --csr ' + directory + '/tls/domain.csr --acme-dir ' + directory + '/tls/well-known/ > ' + directory + '/tls/signed.crt').read()
         os.popen('wget --quiet -O - https://letsencrypt.org/certs/lets-encrypt-x3-cross-signed.pem > ' + directory + '/tls/intermediate.pem').read()
         os.popen('cat ' + directory + '/tls/signed.crt ' + directory + '/tls/intermediate.pem > ' + directory + '/tls/chained.pem')
 
