@@ -109,7 +109,10 @@ RewriteRule (.*) 0000-00-00--0/public/$1 [L]
         os.popen('service httpd restart').read()
 
         dns_list = domains
-        dns_list.append(domain + '.' + tld)
+        if sub_domain == "www":
+            dns_list.append(domain + '.' + tld)
+        else:
+            dns_list.append(sub_domain + '.' + domain + '.' + tld)
         dns = ['DNS:' + x for x in dns_list]
         dns = ",".join(dns)
 
